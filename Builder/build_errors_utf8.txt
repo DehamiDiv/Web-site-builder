@@ -1,0 +1,5 @@
+﻿src/main.tsx(1,1): error TS6133: 'StrictMode' is declared but its value is never read.
+src/pages/Home.tsx(5,10): error TS6133: 'input' is declared but its value is never read.
+src/pages/MyProject.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/pages/MyProject.tsx(2,10): error TS1484: 'Project' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/pages/MyProject.tsx(3,23): error TS6133: 'PlaneIcon' is declared but its value is never read.
