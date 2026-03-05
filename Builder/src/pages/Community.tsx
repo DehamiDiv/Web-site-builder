@@ -28,7 +28,9 @@ const Community = () => {
         ) : projects.length > 0 ? (
           <div className="py-10 min-h-[80vh]">
             <div className="flex items-center justify-between mb-12">
-              <h1 className="text-2xl font-medium text-white">My Projects</h1>
+              <h1 className="text-2xl font-medium text-white">
+                Published Projects
+              </h1>
             </div>
 
             <div className="flex flex-wrap gap-3.5">
