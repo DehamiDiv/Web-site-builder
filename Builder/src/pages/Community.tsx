@@ -4,6 +4,7 @@ import { Loader2Icon, PlusIcon, TrashIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { dummyProjects } from "../assets/assets";
 import Footer from "../assets/components/Footer";
+import { Link } from "react-router-dom";
 
 const Community = () => {
   const [loading, setLoading] = useState(true);
@@ -15,6 +16,8 @@ const Community = () => {
       setProjects(dummyProjects);
       setTimeout(() => setLoading(false), 1000);
     };
+    const deleteProject = async () => {};
+
     fetchProjects();
   }, []);
 
@@ -35,10 +38,11 @@ const Community = () => {
 
             <div className="flex flex-wrap gap-3.5">
               {projects.map((project) => (
-                <div
-                  onClick={() => navigate(`/projects/${project.id}`)}
+                <Link
                   key={project.id}
-                  className="relative group w-72 max-sm:mx-auto cursor-pointer bg-gray-700 rounded-lg overflow-hidden shadow-md hover:shadow-indigo-700/30 hover:border-indigo-800/80 transition-all duration-300"
+                  to={`/view/${project.id}`}
+                  target="_blank"
+                  className="relative group w-72 max-sm:mx-auto cursor-pointer bg-gray-700 rounded-lg overflow-hidden shadow-md hover:border-indigo-800/80 transition-all duration-300"
                 >
                   <div className="relative w-full h-40 bg-gray-900 overflow-hidden border-b border-gray-800">
                     {project.current_code ? (
@@ -65,39 +69,32 @@ const Community = () => {
                     <p className="text-gray-400 mt-1 text-sm line-clamp-2">
                       {project.initial_prompt}
                     </p>
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex justify-between items-center mt-6"
-                    >
+                    <div className="flex justify-between items-center mt-6">
                       <span className="text-xs text-gray-400">
                         {new Date(project.createdAt).toLocaleDateString()}
                       </span>
                       <div className="flex gap-3 text-white text-sm">
                         <button
                           onClick={() => navigate(`/preview/${project.id}`)}
-                          className="px-3 py-1.5 bg-white/10 hover:bg-white/15 rounded-md transition-all"
+                          className="px-3 py-1.5 bg-white/10 hover:bg-white/15 rounded-md transition-colors flex items-center gap-2"
                         >
-                          Preview
-                        </button>
-                        <button
-                          onClick={() => navigate(`/preview/${project.id}`)}
-                          className="px-3 py-1.5 bg-white/10 hover:bg-white/15 rounded-md transition-colors"
-                        >
-                          Open
+                          <span className="bg-gray-200 size-4.5 rounded-full text-black font-semibold flex items-center justify-center">
+                            {project.user?.name?.slice(0, 1)}
+                          </span>
+                          {project.user?.name}
                         </button>
                       </div>
                     </div>
-                    <div>
-                      <TrashIcon
-                        onClick={(e) => {
+
+                    {/* The following lines were malformed and have been removed to ensure syntactical correctness.
                           e.stopPropagation();
-                          deleteProject();
+                         
                         }}
                         className="absolute top-3 right-3 scale-0 group-hover:scale-100 bg-white p-1.5 size-7 rounded text-red-500 text-xl cursor-pointer transition-all"
                       />
-                    </div>
+                    </div> */}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
