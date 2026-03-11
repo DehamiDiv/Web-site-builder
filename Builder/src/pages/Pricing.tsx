@@ -13,7 +13,7 @@ interface Plan {
 
 const Pricing = () => {
   const [plans] = React.useState<Plan[]>(appPlans);
-  const handlePurchase = async (planId) => {};
+  const handlePurchase = async (planId: string) => { if (!planId) return; };
   return (
     <>
       <div className="w-full mx-w-5xl mx-auto z-20 max-md:px-4 min-h-[80vh] py-10">
@@ -22,8 +22,8 @@ const Pricing = () => {
             Choose Your Plan
           </h2>
           <p className="text-gray-400 text-sm max-w-md mx-auto mt-2">
-            Start for free and scle up as you grow.Find the perfect plan for
-            your content creation needs
+            Start for free and scale up as you grow. Find the perfect plan for
+            your content creation needs.
           </p>
         </div>
         <div className="pt-14 py-4 px-4 ">
@@ -76,9 +76,9 @@ const Pricing = () => {
           </div>
         </div>
         <p className="mx-auto text-center text-sm max-w-md mt-10 text-white/60 font-light">
-          Project<span className="text-white">Creation / Revision</span>consume
-          <span className="text-white">5 credits</span>
-          .You can purchase more credits to create more projects
+          Project <span className="text-white">Creation / Revision</span> consume{" "}
+          <span className="text-white">5 credits</span>. You can purchase more
+          credits to create more projects.
         </p>
       </div>
       <Footer />

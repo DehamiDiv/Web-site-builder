@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { Project } from "../types";
-import { Loader2Icon, PlusIcon, TrashIcon } from "lucide-react";
+import { Loader2Icon, PlusIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { dummyProjects } from "../assets/assets";
 import Footer from "../assets/components/Footer";
@@ -16,7 +16,6 @@ const Community = () => {
       setProjects(dummyProjects);
       setTimeout(() => setLoading(false), 1000);
     };
-    const deleteProject = async () => {};
 
     fetchProjects();
   }, []);
