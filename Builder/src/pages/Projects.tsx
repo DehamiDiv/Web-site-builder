@@ -1,13 +1,34 @@
-import React, { useEffect, useState } from "react";
-
-import { Loader2Icon } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import type { Project } from "../types";
+import { dummyProjects, dummyConversations } from "../assets/assets";
+import { Loader2Icon } from "lucide-react";
 
 const Projects = () => {
-  const [project] = useState<Project | null>(null);
-  const [loading] = useState(true);
+  const { projectId } = useParams();
+  const navigate = useNavigate();
 
-  const fetchProject = async () => {};
+  const [project, setProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const [isGenerating, setIsGenerating] = useState(true);
+
+  const [device, setDevice] = useState<"phone" | "tablet" | "desktop">();
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  const fetchProject = async () => {
+    const project = dummyProjects.find((p) => p.id === projectId);
+    setTimeout(() => {
+      if (project) {
+        setProject({ ...project, conversation: dummyConversations as any });
+        setIsGenerating(project.current_code ? false : true);
+      }
+      setLoading(false);
+    }, 2000);
+  };
   useEffect(() => {
     fetchProject();
   }, []);
@@ -22,8 +43,8 @@ const Projects = () => {
     );
   }
   return project ? (
-    <div>
-      <h1>projects</h1>
+    <div className="flex flex-col h-screen w-full bg-gray-900 tetxt-white">
+      <div className="flex max-sm:flex-col sm:items-center gap-4 px-4 py-2 no-scrollbar"></div>
     </div>
   ) : (
     <div className="flex items-center justify-center h-screen">
