@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import type { Project } from "../types";
 import { dummyProjects, dummyConversations } from "../assets/assets";
+import Sidebar from "../assets/components/Sidebar";
 import {
   Loader2Icon,
   MessageSquareIcon,
@@ -27,7 +28,8 @@ const Projects = () => {
   );
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving] = useState(false);
+  const [isgenerating, setIsGenerating] = useState(false);
 
   const fetchProject = async () => {
     const project = dummyProjects.find((p) => p.id === projectId);
@@ -145,7 +147,13 @@ const Projects = () => {
         </div>
       </div>
       <div className="flex-1 flex overflow-auto">
-        <div>Sidebar</div>
+        <Sidebar
+          isMenuOpen={isMenuOpen}
+          project={project}
+          setProject={setProject}
+          isgenerating={isgenerating}
+          setIsGenerating={setIsGenerating}
+        />
         <div className="flex-1 p-2 pl-0">Project preview</div>
       </div>
     </div>
