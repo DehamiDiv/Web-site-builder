@@ -52,7 +52,17 @@ const Projects = () => {
     }, 2000);
   };
   const saveProject = () => {};
-  const downloadCode = () => {};
+  const downloadCode = () => {
+    const code = previewRef.current?.getCode() || project?.current_code;
+    if (!code) return;
+    const blob = new Blob([code], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${project?.name}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   const togglePublish = () => {};
   useEffect(() => {
     fetchProject();
