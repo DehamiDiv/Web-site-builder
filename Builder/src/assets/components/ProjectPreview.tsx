@@ -1,12 +1,12 @@
-import React, { forwardRef } from "react";
+import { forwardRef, useRef, useImperativeHandle } from "react";
 import type { Project } from "../../types";
 import { iframeScript } from "../assets";
 
 interface ProjectPreviewProps {
     project : Project;
-    isgenerating : boolean;
-    device : 'desktop' | 'tablet' | 'mobile';
-    showEditorPanel : boolean;
+    isGenerating : boolean;
+    device? : 'desktop' | 'tablet' | 'mobile';
+    showEditorPanel? : boolean;
 }
 export interface ProjectPreviewRef {
     getCode : () => string|undefined;
@@ -14,17 +14,20 @@ export interface ProjectPreviewRef {
 
 
 
-const ProjectPreview = forwardRef<ProjectPreviewRef, ProjectPreviewProps> (({project,isgenerating,device = 'desktop',showEditorPanel = true},ref) => {
+const ProjectPreview = forwardRef<ProjectPreviewRef, ProjectPreviewProps> (({project,isGenerating,device = 'desktop',showEditorPanel = true},ref) => {
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    useImperativeHandle(ref, () => ({
+        getCode: () => iframeRef.current?.srcdoc
+    }));
     const resolutions = {
-        desktop : 'w-[412px]',
+        desktop : 'w-full',
         tablet : 'w-[768px]',
-        mobile : 'w-full',
+        mobile : 'w-[412px]',
     }
-    const injectPreview = (htmi:string)=>{
+    const injectPreview = (html:string)=>{
         if(!html) return '';
         if(!showEditorPanel) return html;
-        if(htmi.includes('</body')){
+        if(html.includes('</body>')){
             return html.replace('</body>',iframeScript + '</body>')
         }else{
             return html + iframeScript;
@@ -46,6 +49,6 @@ const ProjectPreview = forwardRef<ProjectPreviewRef, ProjectPreviewProps> (({pro
             
         </div>
     );
-};
+});
 
 export default ProjectPreview;  

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import type { Project } from "../types";
 import type { ProjectPreviewRef } from "../assets/components/ProjectPreview";
@@ -8,6 +8,7 @@ import {
   dummyVersion,
 } from "../assets/assets";
 import Sidebar from "../assets/components/Sidebar";
+import ProjectPreview from "../assets/components/ProjectPreview";
 import {
   Loader2Icon,
   MessageSquareIcon,
@@ -28,7 +29,7 @@ const Projects = () => {
 
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
-  const [device, setDevice] = useState<"phone" | "tablet" | "desktop">(
+  const [device, setDevice] = useState<"mobile" | "tablet" | "desktop">(
     "desktop",
   );
 
@@ -103,8 +104,8 @@ const Projects = () => {
         {/* middle */}
         <div className="hidden sm:flex gap-2 bg-gray-950 p-1.5 rounded-md">
           <SmartphoneIcon
-            onClick={() => setDevice("phone")}
-            className={`size-6 p-1 rounded cursor-pointer ${device === "phone" ? "bg-gray-700" : ""}`}
+            onClick={() => setDevice("mobile")}
+            className={`size-6 p-1 rounded cursor-pointer ${device === "mobile" ? "bg-gray-700" : ""}`}
           />
           <TabletIcon
             onClick={() => setDevice("tablet")}
@@ -169,7 +170,7 @@ const Projects = () => {
             ref={previewRef}
             project={project}
             device={device}
-            isgenerating={isgenerating}
+            isGenerating={isgenerating}
           />
         </div>
       </div>
