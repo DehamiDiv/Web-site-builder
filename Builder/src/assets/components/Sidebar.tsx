@@ -1,5 +1,11 @@
 import type { Project, Message, Version } from "../../types";
-import { BotIcon, UserIcon, EyeIcon, SendIcon, Loader2Icon } from "lucide-react";
+import {
+  BotIcon,
+  UserIcon,
+  EyeIcon,
+  SendIcon,
+  Loader2Icon,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -11,11 +17,20 @@ interface SidebarProps {
   setIsGenerating: (isgenerating: boolean) => void;
 }
 
-const Sidebar = ({ isMenuOpen, project, isgenerating }: SidebarProps) => {
+const Sidebar = ({ isMenuOpen, project, isgenerating, setIsGenerating }: SidebarProps) => {
   const messageRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
 
   const handleRollback = async (_versionId: string) => {};
+
+  const handleRevisions = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsGenerating(true);
+    setTimeout(() => {
+      setIsGenerating(false);
+    }, 3000);
+    setInput("");
+  };
   useEffect(() => {
     if (messageRef.current) {
       messageRef.current.scrollIntoView({ behavior: "smooth" });
@@ -128,7 +143,7 @@ const Sidebar = ({ isMenuOpen, project, isgenerating }: SidebarProps) => {
           <div ref={messageRef}></div>
         </div>
         {/*Input area*/}
-        <form className="m-3 relative">
+        <form onSubmit={handleRevisions} className="m-3 relative">
           <div className="flex items-center gap-2">
             <textarea
               onChange={(e) => setInput(e.target.value)}
@@ -138,7 +153,10 @@ const Sidebar = ({ isMenuOpen, project, isgenerating }: SidebarProps) => {
               className="flex-1 p-3 rounded-xl resize-none text-sm outline-none ring ring-gray-700 focus:ring-indigo-500 bg-gray-800 text-gray-100 placeholder-gray-400 transition-all"
               disabled={isgenerating}
             />
-            <button>
+            <button
+              disabled={isgenerating || !input.trim()}
+              className="absolutebottom-2.5 right-2.5 rounded-full bg-linear-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to:indigo-700 text-white transition-colors disabled:opacity-60"
+            >
               {isgenerating ? (
                 <Loader2Icon className="size-7 p-1.5 text-white animate-spin" />
               ) : (

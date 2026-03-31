@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import type { Project } from "../types";
-import { dummyProjects, dummyConversations } from "../assets/assets";
+import type { ProjectPreviewRef } from "../assets/components/ProjectPreview";
+import {
+  dummyProjects,
+  dummyConversations,
+  dummyVersion,
+} from "../assets/assets";
 import Sidebar from "../assets/components/Sidebar";
 import {
   Loader2Icon,
@@ -29,13 +34,18 @@ const Projects = () => {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSaving] = useState(false);
+  const previewRef = useRef<ProjectPreviewRef>(null);
   const [isgenerating, setIsGenerating] = useState(false);
 
   const fetchProject = async () => {
     const project = dummyProjects.find((p) => p.id === projectId);
     setTimeout(() => {
       if (project) {
-        setProject({ ...project, conversation: dummyConversations as any });
+        setProject({
+          ...project,
+          conversation: dummyConversations as any,
+          versions: dummyVersion,
+        });
       }
       setLoading(false);
     }, 2000);
@@ -154,7 +164,14 @@ const Projects = () => {
           isgenerating={isgenerating}
           setIsGenerating={setIsGenerating}
         />
-        <div className="flex-1 p-2 pl-0">Project preview</div>
+        <div className="flex-1 p-2 pl-0">
+          <ProjectPreview
+            ref={previewRef}
+            project={project}
+            device={device}
+            isgenerating={isgenerating}
+          />
+        </div>
       </div>
     </div>
   ) : (
