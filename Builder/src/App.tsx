@@ -8,6 +8,7 @@ import Community from "./pages/Community";
 import View from "./pages/View";
 import Navbar from "./assets/components/Navbar";
 import { useLocation } from "react-router-dom";
+import { Toaster } from "@/components/ui/sonner";
 
 const App = () => {
   const { pathname } = useLocation();
@@ -17,6 +18,7 @@ const App = () => {
     pathname.startsWith("/preview");
   return (
     <div>
+      <Toaster />
       {!hideNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />}></Route>
