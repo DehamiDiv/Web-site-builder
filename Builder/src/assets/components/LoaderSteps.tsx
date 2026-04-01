@@ -28,7 +28,7 @@ const steps = [
   },
 ];
 
-const STEP_DURATION = 45000;
+
 
 interface LoaderStepsProps {
   currentStep: number;

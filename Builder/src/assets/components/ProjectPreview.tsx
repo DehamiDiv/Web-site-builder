@@ -36,25 +36,27 @@ const ProjectPreview = forwardRef<ProjectPreviewRef, ProjectPreviewProps>(
       mobile: "w-[412px]",
     };
     useImperativeHandle(ref, () => ({
-      getCode: () => iframeRef.current?.contentDocument;
-      if(!doc) return "";
-      const body = doc.querySelector("body");
-      if(!body) return undefined;
-      doc.querySelectorAll("[.ai-selected-element],[data-ai-selected").forEach((el)=>{
-        el.classList.remove('ai-selected-element');
-        el.removeAttribute('data-ai-selected');
-        (el as HTMLElement).style.outline = "";
-      });
+      getCode: () => {
+        const doc = iframeRef.current?.contentDocument;
+        if (!doc) return "";
+        
+        const body = doc.querySelector("body");
+        if (!body) return undefined;
+        
+        doc.querySelectorAll(".ai-selected-element, [data-ai-selected]").forEach((el) => {
+          el.classList.remove('ai-selected-element');
+          el.removeAttribute('data-ai-selected');
+          (el as HTMLElement).style.outline = "";
+        });
 
-      const preViewStyle = doc.createElement("ai-preview-style");
-      if(preViewStyle) preViewStyle.remove();
+        const preViewStyle = doc.getElementById("ai-preview-style");
+        if (preViewStyle) preViewStyle.remove();
 
-      const previewscript = doc.getElementById("ai-preview-script");
-      if(previewscript) previewscript.remove();
+        const previewscript = doc.getElementById("ai-preview-script");
+        if (previewscript) previewscript.remove();
 
-
-   const htmlv= doc.documentElement.outerHTML;
-   return html;
+        return doc.documentElement.outerHTML;
+      }
     }));
     useEffect(() => {
       const handleMessage = (event: MessageEvent) => {
