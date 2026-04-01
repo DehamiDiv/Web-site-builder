@@ -4,6 +4,14 @@ import cors from 'cors';
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 const app = express();
 const port = 3000;
 const corsOptions ={
@@ -14,7 +22,14 @@ const corsOptions ={
 }
 
 app.use(cors(corsOptions));
-app.all('/api/auth/*path', toNodeHandler(auth));
+
+// Log all requests to debug connectivity
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+});
+
+app.use('/api/auth', toNodeHandler(auth));
 
 
 app.get("/", (req: Request, res:Response) => {
