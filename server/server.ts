@@ -3,6 +3,7 @@ import 'dotenv/config';
 import cors from 'cors';
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
+import userRouter from "./routes/userRoutes";
 
 process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err);
@@ -31,10 +32,14 @@ app.use((req, res, next) => {
 
 app.use('/api/auth', toNodeHandler(auth));
 
+app.use(express.json({limit:"50mb"}))
+
 
 app.get("/", (req: Request, res:Response) => {
     res.send("Server is Live!");
+
 });
+app.use("/api/user", userRouter);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);

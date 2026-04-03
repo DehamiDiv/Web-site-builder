@@ -65,8 +65,7 @@ export const createNewProject = async (req: Request, res: Response) => {
         data: {
             role: "user",
             content: initial_prompt,
-            projectId: project.id,
-            userId: userId
+            projectId: project.id
         }
        })
 
@@ -168,8 +167,7 @@ const codeGenerationResponse = await openai.chat.completions.create({
     data: {
         projectId: project.id,
         code: code.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim(),
-        description: "Initial version",
-        version: 1
+        description: "Initial version"
     }
  })
 
@@ -205,5 +203,110 @@ const codeGenerationResponse = await openai.chat.completions.create({
 
         console.error("Error creating project:", error);
         res.status(500).json({ error: "Failed to create project" });
+    }
+};
+
+//Controller function to get a single user project
+export const getUserProject = async (req: Request, res: Response) => {
+    try {
+       const userId = req.userId;
+       if(!userId){
+        return res.status(401).json({ error: "Unauthorized user" });
+       }
+       const {projectId} = req.params;
+       const project = await prisma.websiteProject.findUnique({
+        where: {
+            id: projectId,userId
+        },
+        include: {
+            conversation: {orderBy: {timestamp: "asc"}},
+            versions: {orderBy: {timestamp: "asc"}}
+        }
+       })
+      
+       res.status(200).json({ project });
+    } catch (error) {
+        console.error("Error fetching user credits:", error);
+        res.status(500).json({ error: "Failed to fetch user credits" });
+    }
+};
+
+
+//Controller function to get all user projects
+export const getUserProjects = async (req: Request, res: Response) => {
+    try {
+       const userId = req.userId;
+       if(!userId){
+        return res.status(401).json({ error: "Unauthorized user" });
+       }
+       const projects = await prisma.websiteProject.findMany({
+        where: {
+            userId
+        },
+       orderBy: {updatedAt: 'desc'}
+       })
+      
+       res.status(200).json({ projects });
+    } catch (error) {
+        console.error("Error fetching user credits:", error);
+        res.status(500).json({ error: "Failed to fetch user credits" });
+    }
+};
+
+
+//controller function to toggle project publish status
+export const togglePublish = async (req: Request, res: Response) => {
+    try {
+       const userId = req.userId;
+       if(!userId){
+        return res.status(401).json({ error: "Unauthorized user" });
+       }
+       const {projectId} = req.params;
+       const project = await prisma.websiteProject.findUnique({
+        where: {
+            id: projectId,userId
+        },
+       })
+       if(!project){
+        return res.status(404).json({ error: "Project not found" });
+       }
+       const updated = await prisma.websiteProject.update({
+        where: {
+            id: projectId
+        },
+        data: {
+            isPublished: !project.isPublished
+        }
+       })
+       res.status(200).json({
+           message: updated.isPublished ? 'Project Published Successfully' : 'Project Unpublished',
+           isPublished: updated.isPublished
+       });
+    } catch (error) {
+        console.error("Error toggling publish status:", error);
+        res.status(500).json({ error: "Failed to toggle publish status" });
+    }
+};
+
+
+// Controller function to purchase credits
+export const purchaseCredits = async (req: Request, res: Response) => {
+    try {
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthorized user" });
+        }
+        const { credits } = req.body;
+        if (!credits || typeof credits !== 'number' || credits <= 0) {
+            return res.status(400).json({ error: "Invalid credits amount" });
+        }
+        const user = await prisma.user.update({
+            where: { id: userId },
+            data: { credits: { increment: credits } }
+        });
+        res.status(200).json({ message: "Credits purchased successfully", credits: user.credits });
+    } catch (error) {
+        console.error("Error purchasing credits:", error);
+        res.status(500).json({ error: "Failed to purchase credits" });
     }
 };
