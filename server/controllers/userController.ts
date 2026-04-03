@@ -29,7 +29,7 @@ export const createNewProject = async (req: Request, res: Response) => {
     const userId = req.userId;
     
     try {
-        const { intial_prompt } = req.body;
+        const { initial_prompt } = req.body;
        if(!userId){
         return res.status(401).json({ error: "Unauthorized user" });
        }
@@ -47,8 +47,8 @@ export const createNewProject = async (req: Request, res: Response) => {
        //Create new project
        const project = await prisma.websiteProject.create({
         data: {
-            name : initial_prompt.length > 50 ? initial_prompt.substring(0, 47) + "..." : initial_prompt,
-            initial_prompt: 
+            name: initial_prompt.length > 50 ? initial_prompt.substring(0, 47) + "..." : initial_prompt,
+            initial_prompt: initial_prompt,
             userId
         }
        })
@@ -58,7 +58,6 @@ export const createNewProject = async (req: Request, res: Response) => {
             id: userId
         },
         data: {
-           
             totalCreation: user.totalCreation + 1
         }
        })
@@ -82,7 +81,7 @@ export const createNewProject = async (req: Request, res: Response) => {
        res.json({projectId: project.id})
 
        //Enhance user prompt
-       const enhancedPrompt = await openai.chat.completions.create({
+       const promptEnhancementResponse = await openai.chat.completions.create({
         model: "z-ai/glm-4.5-air:free",
         messages: [
             {
@@ -110,7 +109,7 @@ Return ONLY the enhanced prompt, nothing else. Make it detailed but concise (2-3
        await prisma.conversation.create({
         data: {
             role: "assistant",
-            content: `I've enhanced your promt to: "${enhancedPrompt}"`,
+            content: `I've enhanced your prompt to: "${enhancedPrompt}"`,
             projectId: project.id
             
         }
@@ -168,7 +167,7 @@ const codeGenerationResponse = await openai.chat.completions.create({
  const version = await prisma.version.create({
     data: {
         projectId: project.id,
-        code: code.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, ''),trim(),
+        code: code.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim(),
         description: "Initial version",
         version: 1
     }
@@ -188,8 +187,7 @@ const codeGenerationResponse = await openai.chat.completions.create({
         id: project.id
     },
     data: {
-        
-        current_code: code.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, ''),trim(),
+        current_code: code.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim(),
         current_version_index: version.id,
         
     }
@@ -205,7 +203,7 @@ const codeGenerationResponse = await openai.chat.completions.create({
             }
         })
 
-        console.error("Error fetching user credits:", error);
-        res.status(500).json({ error: "Failed to fetch user credits" });
+        console.error("Error creating project:", error);
+        res.status(500).json({ error: "Failed to create project" });
     }
 };
