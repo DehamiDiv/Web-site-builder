@@ -192,17 +192,20 @@ const codeGenerationResponse = await openai.chat.completions.create({
  })
        
     } catch (error:any) {
-        await prisma.user.update({
-            where: {
-                id: userId
-            },
-            data: {
-                credits:{increment: 5}
-            }
-        })
-
+        if (userId) {
+            await prisma.user.update({
+                where: {
+                    id: userId
+                },
+                data: {
+                    credits:{increment: 5}
+                }
+            })
+        }
         console.error("Error creating project:", error);
-        res.status(500).json({ error: "Failed to create project" });
+        if (!res.headersSent) {
+            res.status(500).json({ error: "Failed to create project" });
+        }
     }
 };
 
@@ -213,7 +216,7 @@ export const getUserProject = async (req: Request, res: Response) => {
        if(!userId){
         return res.status(401).json({ error: "Unauthorized user" });
        }
-       const {projectId} = req.params;
+       const projectId = req.params.projectId as string;
        const project = await prisma.websiteProject.findUnique({
         where: {
             id: projectId,userId
@@ -226,8 +229,8 @@ export const getUserProject = async (req: Request, res: Response) => {
       
        res.status(200).json({ project });
     } catch (error) {
-        console.error("Error fetching user credits:", error);
-        res.status(500).json({ error: "Failed to fetch user credits" });
+        console.error("Error fetching user project:", error);
+        res.status(500).json({ error: "Failed to fetch user project" });
     }
 };
 
@@ -248,8 +251,8 @@ export const getUserProjects = async (req: Request, res: Response) => {
       
        res.status(200).json({ projects });
     } catch (error) {
-        console.error("Error fetching user credits:", error);
-        res.status(500).json({ error: "Failed to fetch user credits" });
+        console.error("Error fetching user projects:", error);
+        res.status(500).json({ error: "Failed to fetch user projects" });
     }
 };
 
@@ -261,7 +264,7 @@ export const togglePublish = async (req: Request, res: Response) => {
        if(!userId){
         return res.status(401).json({ error: "Unauthorized user" });
        }
-       const {projectId} = req.params;
+       const projectId = req.params.projectId as string;
        const project = await prisma.websiteProject.findUnique({
         where: {
             id: projectId,userId
