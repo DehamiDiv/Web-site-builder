@@ -11,18 +11,19 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [credits, setCredits] = React.useState(0);
 
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
 
-  const getCredits = async () => {
-    try {
-      const { data } = await api.get("/api/user/credits");
-      setCredits(data.credits);
-    } catch (error) {
-      toast.error("Error fetching user credits");
-      console.error("Error fetching user credits:", error);
-    }
-  };
   useEffect(() => {
+    const getCredits = async () => {
+      try {
+        const { data } = await api.get("/api/user/credits");
+        setCredits(data.credits);
+      } catch (error) {
+        toast.error("Error fetching user credits");
+        console.error("Error fetching user credits:", error);
+      }
+    };
+
     if (session?.user) {
       getCredits();
     }
@@ -41,7 +42,7 @@ const Navbar = () => {
           <Link to="/pricing">Pricing</Link>
         </div>
 
-        <div className="hidden md:block gap-3">
+        <div className="flex items-center gap-3">
           {!session?.user ? (
             <button
               onClick={() => navigate("/auth/sign-in")}
@@ -52,7 +53,7 @@ const Navbar = () => {
           ) : (
             <>
               <button>
-                Credits : <span></span>
+                Credits : <span className="text-indigo-300">{credits}</span>
               </button>
               <UserButton size="icon" />
             </>
