@@ -26,6 +26,7 @@ const ProjectPreview = forwardRef<ProjectPreviewRef, ProjectPreviewProps>(
     ref,
   ) => {
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [selectedElement, setSelectedElement] = useState<any>(null);
     useImperativeHandle(ref, () => ({
       getCode: () => iframeRef.current?.srcdoc,
@@ -72,6 +73,7 @@ const ProjectPreview = forwardRef<ProjectPreviewRef, ProjectPreviewProps>(
       };
     }, []);
     const handleUpdate = useCallback(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (updates: any) => {
         if (!selectedElement) return;
         const updatedElement = { ...selectedElement, ...updates };

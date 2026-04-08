@@ -21,6 +21,7 @@ const Sidebar = ({ isMenuOpen, project, isgenerating, setIsGenerating }: Sidebar
   const messageRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleRollback = async (_versionId: string) => {};
 
   const handleRevisions = async (e: React.FormEvent) => {
@@ -155,7 +156,7 @@ const Sidebar = ({ isMenuOpen, project, isgenerating, setIsGenerating }: Sidebar
             />
             <button
               disabled={isgenerating || !input.trim()}
-              className="absolutebottom-2.5 right-2.5 rounded-full bg-linear-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to:indigo-700 text-white transition-colors disabled:opacity-60"
+              className="absolute bottom-2.5 right-2.5 rounded-full bg-linear-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to:indigo-700 text-white transition-colors disabled:opacity-60"
             >
               {isgenerating ? (
                 <Loader2Icon className="size-7 p-1.5 text-white animate-spin" />
