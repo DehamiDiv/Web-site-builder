@@ -13,7 +13,31 @@ interface Plan {
 
 const Pricing = () => {
   const [plans] = React.useState<Plan[]>(appPlans);
-  const handlePurchase = async (planId: string) => { if (!planId) return; };
+  const handlePurchase = async (planId: string) => {
+    if (!planId) return;
+    try {
+      // Assuming server runs on localhost:3000 and auth is cookie/token based
+      const response = await fetch("http://localhost:3000/api/user/purchase-credits", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        // Include credentials so the backend gets the session cookie
+        credentials: "include", 
+        body: JSON.stringify({ planId })
+      });
+      const data = await response.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "Failed to create checkout session");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error processing your purchase. Please try again later.");
+    }
+  };
   return (
     <>
       <div className="w-full mx-w-5xl mx-auto z-20 max-md:px-4 min-h-[80vh] py-10">

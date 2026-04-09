@@ -6,6 +6,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.purchaseCredits = exports.togglePublish = exports.getUserProjects = exports.getUserProject = exports.createNewProject = exports.getUserCredits = void 0;
 const prisma_js_1 = __importDefault(require("../lib/prisma.js"));
 const openai_js_1 = __importDefault(require("../config/openai.js"));
+const extractHTML = (content) => {
+    // 1. Try to find content between <html> and </html> tags
+    const htmlMatch = content.match(/<html[\s\S]*?<\/html>/i);
+    if (htmlMatch) {
+        return htmlMatch[0];
+    }
+    // 2. If no <html> tags, try to strip markdown fences
+    return content.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim();
+};
 //Get user credits
 const getUserCredits = async (req, res) => {
     try {
@@ -83,7 +92,7 @@ const createNewProject = async (req, res) => {
         res.json({ projectId: project.id });
         //Enhance user prompt
         const promptEnhancementResponse = await openai_js_1.default.chat.completions.create({
-            model: "z-ai/glm-4.5-air:free",
+            model: "openai/gpt-oss-120b:free",
             messages: [
                 {
                     role: "system",
@@ -123,7 +132,7 @@ Return ONLY the enhanced prompt, nothing else. Make it detailed but concise (2-3
         });
         //Generate website code
         const codeGenerationResponse = await openai_js_1.default.chat.completions.create({
-            model: "kwaipilot/kat-coder-pro-v2",
+            model: "openai/gpt-oss-120b:free",
             messages: [
                 {
                     role: "system",
@@ -159,12 +168,37 @@ Return ONLY the enhanced prompt, nothing else. Make it detailed but concise (2-3
                 }
             ]
         });
-        const code = codeGenerationResponse.choices[0].message.content || '';
+        const codeRaw = codeGenerationResponse.choices[0].message.content || '';
+        console.log("--- RAW AI RESPONSE START (createNewProject) ---");
+        console.log(codeRaw);
+        console.log("--- RAW AI RESPONSE END ---");
+        const code = extractHTML(codeRaw);
+        if (!code || code.trim() === '') {
+            console.log("Error: Extracted code is empty.");
+            await prisma_js_1.default.conversation.create({
+                data: {
+                    role: "assistant",
+                    content: "Unable to generate website code. Please try again.",
+                    projectId: project.id,
+                }
+            });
+            if (userId) {
+                await prisma_js_1.default.user.update({
+                    where: {
+                        id: userId
+                    },
+                    data: {
+                        credits: { increment: 5 }
+                    }
+                });
+            }
+            return res.status(500).json({ error: "Failed to generate website code" });
+        }
         //Create version for the project
         const version = await prisma_js_1.default.version.create({
             data: {
                 projectId: project.id,
-                code: code.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim(),
+                code: code,
                 description: "Initial version"
             }
         });
@@ -180,7 +214,7 @@ Return ONLY the enhanced prompt, nothing else. Make it detailed but concise (2-3
                 id: project.id
             },
             data: {
-                current_code: code.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim(),
+                current_code: code,
                 current_version_index: version.id,
             }
         });
@@ -287,19 +321,25 @@ exports.togglePublish = togglePublish;
 // Controller function to purchase credits
 const purchaseCredits = async (req, res) => {
     try {
+        const Plans = {
+            basic: { credits: 100, amount: 5 },
+            pro: { credits: 400, amount: 19 },
+            enterprise: { credits: 1000, amount: 49 },
+        };
         const userId = req.userId;
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized user" });
+        const { planId } = req.body;
+        const plan = Plans[planId];
+        if (!plan) {
+            return res.status(404).json({ message: 'Plan not found' });
         }
-        const { credits } = req.body;
-        if (!credits || typeof credits !== 'number' || credits <= 0) {
-            return res.status(400).json({ error: "Invalid credits amount" });
-        }
-        const user = await prisma_js_1.default.user.update({
-            where: { id: userId },
-            data: { credits: { increment: credits } }
+        const transaction = await prisma_js_1.default.transaction.create({
+            data: {
+                userId: userId,
+                planId: req.body.planId,
+                amount: plan.amount,
+                credits: plan.credits
+            }
         });
-        res.status(200).json({ message: "Credits purchased successfully", credits: user.credits });
     }
     catch (error) {
         console.error("Error purchasing credits:", error);

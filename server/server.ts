@@ -5,6 +5,7 @@ import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 import userRouter from "./routes/userRoutes";
 import projectRouter from "./routes/projectRoutes";
+import { sripeWebhook } from "./controllers/stripeWebhooks";
 
 process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err);
@@ -26,6 +27,7 @@ const corsOptions ={
 }
 
 app.use(cors(corsOptions));
+app.post('/api/stripe', express.raw({type: 'application/json'}), stripeWebhooks)
 
 // Log all requests to debug connectivity
 app.use((req, res, next) => {

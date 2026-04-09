@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
 import openai from "../config/openai.js";
+import Stripe from "stripe";
 
 const extractHTML = (content: string) => {
     // 1. Try to find content between <html> and </html> tags
@@ -344,9 +345,9 @@ export const purchaseCredits = async (req: Request, res: Response) => {
             enterprise: {credits: 1000, amount:49},
         }
         const userId = req.userId;
-        const {planId} = req.body as {planId: keyof typeof plans}
+        const {planId} = req.body as {planId: keyof typeof Plans}
 
-        const plan:Plan = plans[planId]
+        const plan:Plan = Plans[planId]
         if(!plan){
             return res.status(404).json({message: 'Plan not found'})
         }
@@ -356,9 +357,42 @@ export const purchaseCredits = async (req: Request, res: Response) => {
                 planId: req.body.planId,
                 amount: plan.amount,
                 credits: plan.credits
-
             }
-        })
+        });
+
+        const stripeKey = process.env.STRIPE_SECRET_KEY as string;
+        if (!stripeKey) {
+            return res.status(500).json({ error: "Stripe not configured on server" });
+        }
+        
+        const stripe = new Stripe(stripeKey);
+
+        const domain = process.env.FRONTEND_URL || "http://localhost:5173";
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: `${plan.credits} Credits Plan`,
+                            description: `Purchase ${plan.credits} credits for Website Builder`,
+                        },
+                        unit_amount: plan.amount * 100, // Stripe expects amounts in cents
+                    },
+                    quantity: 1,
+                },
+            ],
+            mode: 'payment',
+            metadata: {
+                transactionId: transaction.id,
+                appId: 'ai-site-builder'
+            },
+            success_url: `${domain}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${domain}/pricing?canceled=true`,
+        });
+
+        res.status(200).json({ url: session.url });
     } catch (error) {
         console.error("Error purchasing credits:", error);
         res.status(500).json({ error: "Failed to purchase credits" });
