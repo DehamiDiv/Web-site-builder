@@ -22,15 +22,43 @@ const Sidebar = ({ isMenuOpen, project, isgenerating, setIsGenerating }: Sidebar
   const [input, setInput] = useState("");
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleRollback = async (_versionId: string) => {};
+  const handleRollback = async (versionId: string) => {
+    try {
+      setIsGenerating(true);
+      const { data } = await api.get(
+        `/api/project/rollback/${project.id}/${versionId}`,
+      );
+      toast.success(data.message);
+      window.location.reload(); // Refresh to show the rolled back version
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to rollback version");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleRevisions = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsGenerating(true);
-    setTimeout(() => {
+    if (!input.trim()) return;
+
+    try {
+      setIsGenerating(true);
+      const userMessage = input;
+      setInput("");
+
+      await api.post(`/api/project/revision/${project.id}`, {
+        message: userMessage,
+      });
+
+      // After revision request is successful, the AI starts generating on the backend.
+      // We need to poll for updates.
+      toast.info("AI is processing your request...");
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to submit revision");
       setIsGenerating(false);
-    }, 3000);
-    setInput("");
+    }
   };
   useEffect(() => {
     if (messageRef.current) {

@@ -274,6 +274,27 @@ export const getProjectCode = async (req: Request, res: Response) => {
 };
 
 
+// Get all published projects (public, no auth)
+export const getAllPublishedProjects = async (req: Request, res: Response) => {
+    try {
+        const projects = await prisma.websiteProject.findMany({
+            where: { isPublished: true },
+            include: {
+                user: {
+                    select: { name: true, id: true }
+                }
+            },
+            orderBy: { updatedAt: 'desc' }
+        });
+
+        res.status(200).json({ projects });
+    } catch (error) {
+        console.error("Error getting all published projects:", error);
+        res.status(500).json({ error: "Failed to get published projects" });
+    }
+};
+
+
 // Get a published project by ID (public, no auth)
 export const getPublishedProject = async (req: Request, res: Response) => {
     try {

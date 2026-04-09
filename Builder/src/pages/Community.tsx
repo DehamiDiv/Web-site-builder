@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import type { Project } from "../types";
 import { Loader2Icon, PlusIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { dummyProjects } from "../assets/assets";
+import api from "@/config/axios";
+import { toast } from "sonner";
 import Footer from "../assets/components/Footer";
 import { Link } from "react-router-dom";
 
@@ -13,8 +14,18 @@ const Community = () => {
 
   useEffect(() => {
     const fetchProjects = async () => {
-      setProjects(dummyProjects);
-      setTimeout(() => setLoading(false), 1000);
+      try {
+        setLoading(true);
+        const { data } = await api.get("/api/project/all");
+        setProjects(data.projects || []);
+      } catch (error: any) {
+        console.error(error);
+        toast.error(
+          error.response?.data?.error || "Failed to load community projects",
+        );
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchProjects();

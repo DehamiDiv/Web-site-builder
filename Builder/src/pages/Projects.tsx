@@ -35,22 +35,55 @@ const Projects = () => {
   const previewRef = useRef<ProjectPreviewRef>(null);
   const [isgenerating, setIsGenerating] = useState(false);
 
-  const fetchProject = async () => {
+  const fetchProject = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const { data } = await api.post(`/api/user/project/${projectId}`);
       if (data.project) {
+        // If we are polling for a revision, we stop when the current_version_index changes
+        if (
+          isgenerating &&
+          project &&
+          data.project.current_version_index !== project.current_version_index
+        ) {
+          setIsGenerating(false);
+        }
+
         setProject(data.project);
+
+        // For initial creation
+        if (!data.project.current_code) {
+          setIsGenerating(true);
+        }
       } else {
         toast.error("Project not found");
       }
     } catch (error: any) {
       console.error(error);
-      toast.error(error.response?.data?.error || "Failed to fetch project");
+      if (showLoading) {
+        toast.error(error.response?.data?.error || "Failed to fetch project");
+      }
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchProject();
+  }, [projectId]);
+
+  // Polling logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isgenerating) {
+      interval = setInterval(() => {
+        fetchProject(false);
+      }, 3000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isgenerating]);
 
   const saveProject = async () => {
     const code = previewRef.current?.getCode() || project?.current_code;
@@ -79,17 +112,17 @@ const Projects = () => {
   const togglePublish = async () => {
     try {
       const { data } = await api.post(`/api/user/purchase-toggle/${projectId}`);
-      setProject((prev) => prev ? { ...prev, isPublished: data.isPublished } : prev);
+      setProject((prev) =>
+        prev ? { ...prev, isPublished: data.isPublished } : prev,
+      );
       toast.success(data.message);
     } catch (error: any) {
       console.error(error);
-      toast.error(error.response?.data?.error || "Failed to toggle publish status");
+      toast.error(
+        error.response?.data?.error || "Failed to toggle publish status",
+      );
     }
   };
-  useEffect(() => {
-    fetchProject();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   if (loading) {
     return (
