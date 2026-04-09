@@ -8,13 +8,14 @@ import {
     deleteProject,
     getPublishedProject,
     getAllPublishedProjects
-} from "../controllers/projectControllwe.js";
+} from "../controllers/projectController.js";
 
 const projectRouter = express.Router();
 
 projectRouter.post("/revision/:projectId", protect, makeRevision);
 projectRouter.get("/rollback/:projectId/:versionId", protect, rollbackToVersion);
 projectRouter.get("/code/:projectId", protect, getProjectCode);
+projectRouter.get("/code/:projectId/:versionId", protect, getProjectCode);
 projectRouter.post("/save/:projectId", protect, saveProjectCode);
 projectRouter.delete("/delete/:projectId", protect, deleteProject);
 projectRouter.get("/published/:projectId", getPublishedProject);

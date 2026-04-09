@@ -2,6 +2,17 @@ import { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
 import openai from "../config/openai.js";
 
+const extractHTML = (content: string) => {
+    // 1. Try to find content between <html> and </html> tags
+    const htmlMatch = content.match(/<html[\s\S]*?<\/html>/i);
+    if (htmlMatch) {
+        return htmlMatch[0];
+    }
+    
+    // 2. If no <html> tags, try to strip markdown fences
+    return content.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim();
+};
+
 
 // Controller function to make Revision
 export const makeRevision = async (req: Request, res: Response) => {
@@ -47,7 +58,7 @@ export const makeRevision = async (req: Request, res: Response) => {
 
         // Enhance user prompt
         const promptEnhancementResponse = await openai.chat.completions.create({
-            model: "kwaipilot/kat-coder-pro-v2",
+            model: "openai/gpt-oss-120b:free",
             messages: [
                 {
                     role: "system",
@@ -87,7 +98,7 @@ Return ONLY the enhanced request, nothing else. Keep it concise (1-2 sentences).
 
         // Generate website code
         const codeGenerationResponse = await openai.chat.completions.create({
-            model: "kwaipilot/kat-coder-pro-v2",
+            model: "openai/gpt-oss-120b:free",
             messages: [
                 {
                     role: "system",
@@ -110,8 +121,15 @@ Return ONLY the enhanced request, nothing else. Keep it concise (1-2 sentences).
                 }
             ]
         })
-        const code = codeGenerationResponse.choices[0].message.content || '';
-        if(!code){
+        const codeRaw = codeGenerationResponse.choices[0].message.content || '';
+        console.log("--- RAW AI RESPONSE START (projectController.ts) ---");
+        console.log(codeRaw);
+        console.log("--- RAW AI RESPONSE END ---");
+
+        const code = extractHTML(codeRaw);
+
+        if(!code || code.trim() === ''){
+            console.log("Error: Extracted code is empty.");
             await prisma.conversation.create({
                 data: {
                     role: "assistant",
@@ -136,7 +154,7 @@ Return ONLY the enhanced request, nothing else. Keep it concise (1-2 sentences).
         const version = await prisma.version.create({
             data: {
                 projectId,
-                code: code.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim(),
+                code: code,
                 description: "Changes made"
             }
         })
@@ -152,7 +170,7 @@ Return ONLY the enhanced request, nothing else. Keep it concise (1-2 sentences).
         await prisma.websiteProject.update({
             where: { id: projectId },
             data: {
-                current_code: code.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim(),
+                current_code: code,
                 current_version_index: version.id
             }
         })
@@ -257,6 +275,7 @@ export const getProjectCode = async (req: Request, res: Response) => {
         }
 
         const projectId = req.params.projectId as string;
+        const versionId = req.params.versionId as string | undefined;
 
         const project = await prisma.websiteProject.findUnique({
             where: { id: projectId, userId },
@@ -264,6 +283,14 @@ export const getProjectCode = async (req: Request, res: Response) => {
         })
         if (!project) {
             return res.status(404).json({ error: "Project not found" });
+        }
+
+        if (versionId) {
+            const version = project.versions.find(v => v.id === versionId);
+            if (!version) {
+                return res.status(404).json({ error: "Version not found" });
+            }
+            return res.json({ code: version.code });
         }
 
         res.json({ code: project.current_code });

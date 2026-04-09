@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import api from "@/config/axios";
+import { toast } from "sonner";
 
 interface SidebarProps {
   isMenuOpen: boolean;
@@ -17,19 +19,33 @@ interface SidebarProps {
   setIsGenerating: (isgenerating: boolean) => void;
 }
 
-const Sidebar = ({ isMenuOpen, project, isgenerating, setIsGenerating }: SidebarProps) => {
+const Sidebar = ({
+  isMenuOpen,
+  project,
+  setProject,
+  isgenerating,
+  setIsGenerating,
+}: SidebarProps) => {
   const messageRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const handleRollback = async (versionId: string) => {
     try {
+      const confirm = window.confirm(
+        "Are you sure you want to rollback to this version?",
+      );
+      if (!confirm) return;
       setIsGenerating(true);
-      const { data } = await api.get(
+      await api.get(
         `/api/project/rollback/${project.id}/${versionId}`,
       );
-      toast.success(data.message);
-      window.location.reload(); // Refresh to show the rolled back version
+      
+      const { data } = await api.post(`/api/user/project/${project.id}`);
+      if (data.project) {
+        setProject(data.project);
+      }
+      toast.success("Version rolled back successfully");
     } catch (error: any) {
       console.error(error);
       toast.error(error.response?.data?.error || "Failed to rollback version");
@@ -47,16 +63,19 @@ const Sidebar = ({ isMenuOpen, project, isgenerating, setIsGenerating }: Sidebar
       const userMessage = input;
       setInput("");
 
-      await api.post(`/api/project/revision/${project.id}`, {
+      const { data } = await api.post(`/api/project/revision/${project.id}`, {
         message: userMessage,
       });
 
-      // After revision request is successful, the AI starts generating on the backend.
-      // We need to poll for updates.
-      toast.info("AI is processing your request...");
+      toast.success(data.message || "AI is processing your request...");
+      
+      // The parent Projects.tsx component handles polling for the results
+      // when isgenerating (isGenerating prop) is true.
     } catch (error: any) {
       console.error(error);
-      toast.error(error.response?.data?.error || "Failed to submit revision");
+      toast.error(
+        error.response?.data?.error || "Failed to submit revision",
+      );
       setIsGenerating(false);
     }
   };

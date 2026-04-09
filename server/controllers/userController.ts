@@ -2,6 +2,17 @@ import { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
 import openai from "../config/openai.js";
 
+const extractHTML = (content: string) => {
+    // 1. Try to find content between <html> and </html> tags
+    const htmlMatch = content.match(/<html[\s\S]*?<\/html>/i);
+    if (htmlMatch) {
+        return htmlMatch[0];
+    }
+    
+    // 2. If no <html> tags, try to strip markdown fences
+    return content.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim();
+};
+
 //Get user credits
 export const getUserCredits = async (req: Request, res: Response) => {
     try {
@@ -81,7 +92,7 @@ export const createNewProject = async (req: Request, res: Response) => {
 
        //Enhance user prompt
        const promptEnhancementResponse = await openai.chat.completions.create({
-        model: "kwaipilot/kat-coder-pro-v2",
+        model: "openai/gpt-oss-120b:free",
         messages: [
             {
                 role: "system",
@@ -124,7 +135,7 @@ Return ONLY the enhanced prompt, nothing else. Make it detailed but concise (2-3
 
 //Generate website code
 const codeGenerationResponse = await openai.chat.completions.create({
-    model: "kwaipilot/kat-coder-pro-v2",
+    model: "openai/gpt-oss-120b:free",
     messages: [
         {
             role: "system",
@@ -160,8 +171,15 @@ const codeGenerationResponse = await openai.chat.completions.create({
         }
     ]
 })
- const code = codeGenerationResponse.choices[0].message.content || '';
- if(!code){
+ const codeRaw = codeGenerationResponse.choices[0].message.content || '';
+ console.log("--- RAW AI RESPONSE START (createNewProject) ---");
+ console.log(codeRaw);
+ console.log("--- RAW AI RESPONSE END ---");
+
+ const code = extractHTML(codeRaw);
+ 
+ if(!code || code.trim() === ''){
+     console.log("Error: Extracted code is empty.");
      await prisma.conversation.create({
     data: {
         role: "assistant",
@@ -187,7 +205,7 @@ const codeGenerationResponse = await openai.chat.completions.create({
  const version = await prisma.version.create({
     data: {
         projectId: project.id,
-        code: code.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim(),
+        code: code,
         description: "Initial version"
     }
  })
@@ -206,7 +224,7 @@ const codeGenerationResponse = await openai.chat.completions.create({
         id: project.id
     },
     data: {
-        current_code: code.replace(/```[a-z]*\n?/gi, '').replace(/```$/g, '').trim(),
+        current_code: code,
         current_version_index: version.id,
         
     }
@@ -227,7 +245,7 @@ const codeGenerationResponse = await openai.chat.completions.create({
         if (!res.headersSent) {
             res.status(500).json({ error: "Failed to create project" });
         }
-    }
+     }
 };
 
 //Controller function to get a single user project

@@ -25,7 +25,7 @@ const Home = () => {
       });
       setLoading(false);
       navigate(`/projects/${data.projectId}`);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (error: any) {
       setLoading(false);
       toast.error(error.response?.data?.error || "Something went wrong");

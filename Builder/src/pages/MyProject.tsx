@@ -5,8 +5,10 @@ import { useNavigate } from "react-router-dom";
 import Footer from "../assets/components/Footer";
 import api from "@/config/axios";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 
 const MyProject = () => {
+  const { data: session, isPending } = authClient.useSession();
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
   const navigate = useNavigate();
@@ -36,8 +38,23 @@ const MyProject = () => {
   };
 
   useEffect(() => {
+    if (isPending) return;
+    if (!session?.user) {
+      toast.error("Please login to view your projects");
+      navigate("/");
+      return;
+    }
     fetchProjects();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, isPending, navigate]);
+
+  if (isPending) {
+    return (
+      <div className="flex items-center justify-center h-[80vh]">
+        <Loader2Icon className="size-7 animate-spin text-indigo-200" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -107,7 +124,7 @@ const MyProject = () => {
                           Preview
                         </button>
                         <button
-                          onClick={() => navigate(`/preview/${project.id}`)}
+                          onClick={() => navigate(`/projects/${project.id}`)}
                           className="px-3 py-1.5 bg-white/10 hover:bg-white/15 rounded-md transition-colors"
                         >
                           Open

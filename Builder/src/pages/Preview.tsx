@@ -1,21 +1,34 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Loader2Icon } from "lucide-react";
 import type { Project } from "../types";
 import ProjectPreview from "../assets/components/ProjectPreview";
 import api from "@/config/axios";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 
 const Preview = () => {
-  const { projectId } = useParams();
+  const navigate = useNavigate();
+  const { data: session, isPending } = authClient.useSession();
+  const { projectId, versionId } = useParams();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isPending) return;
+    if (!session?.user) {
+      toast.error("Please login to continue");
+      navigate("/");
+      return;
+    }
+
     const fetchCode = async () => {
       try {
         setLoading(true);
-        const { data } = await api.get(`/api/project/code/${projectId}`);
+        const url = versionId 
+          ? `/api/project/code/${projectId}/${versionId}` 
+          : `/api/project/code/${projectId}`;
+        const { data } = await api.get(url);
         if (data.code) {
           setCode(data.code);
         }
@@ -28,9 +41,9 @@ const Preview = () => {
     };
 
     fetchCode();
-  }, [projectId]);
+  }, [projectId, versionId, session, isPending, navigate]);
 
-  if (loading) {
+  if (loading || isPending) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2Icon className="size-7 animate-spin text-indigo-200" />

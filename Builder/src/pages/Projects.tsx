@@ -41,18 +41,23 @@ const Projects = () => {
       const { data } = await api.post(`/api/user/project/${projectId}`);
       if (data.project) {
         // If we are polling for a revision, we stop when the current_version_index changes
-        if (
-          isgenerating &&
-          project &&
-          data.project.current_version_index !== project.current_version_index
-        ) {
+        // or if an error message appears in the conversation
+        const lastMessage = data.project.conversation?.[data.project.conversation.length - 1];
+        const isErrorInChat = lastMessage?.role === "assistant" && lastMessage.content.includes("Unable to generate");
+        const isCompleted = project && data.project.current_version_index !== project.current_version_index;
+
+        if (isgenerating && (isCompleted || isErrorInChat)) {
           setIsGenerating(false);
+          if (isErrorInChat) {
+            toast.error("AI failed to generate code. Please check the chat for details.");
+          }
         }
 
         setProject(data.project);
 
-        // For initial creation
-        if (!data.project.current_code) {
+        // For initial creation or if somehow code is missing but we're not already generating
+        // AND there is no error in chat yet.
+        if (!data.project.current_code && !isgenerating && !isErrorInChat) {
           setIsGenerating(true);
         }
       } else {
@@ -70,11 +75,12 @@ const Projects = () => {
 
   useEffect(() => {
     fetchProject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   // Polling logic
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (isgenerating) {
       interval = setInterval(() => {
         fetchProject(false);
@@ -83,6 +89,7 @@ const Projects = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isgenerating]);
 
   const saveProject = async () => {

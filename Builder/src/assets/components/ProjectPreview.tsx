@@ -9,6 +9,7 @@ import {
 import type { Project } from "../../types";
 import { iframeScript } from "../assets";
 import EditorPanel from "./EditorPanel";
+import LoaderSteps from "./LoaderSteps";
 
 interface ProjectPreviewProps {
   project: Project;
@@ -26,11 +27,22 @@ const ProjectPreview = forwardRef<ProjectPreviewRef, ProjectPreviewProps>(
     ref,
   ) => {
     const iframeRef = useRef<HTMLIFrameElement>(null);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const [selectedElement, setSelectedElement] = useState<any>(null);
-    useImperativeHandle(ref, () => ({
-      getCode: () => iframeRef.current?.srcdoc,
-    }));
+    const [currentStep, setCurrentStep] = useState(0);
+
+    useEffect(() => {
+      let interval: ReturnType<typeof setInterval>;
+      if (isGenerating) {
+        setCurrentStep(0);
+        interval = setInterval(() => {
+          setCurrentStep((prev) => (prev < 3 ? prev + 1 : prev));
+        }, 3000);
+      } else {
+        setCurrentStep(0);
+      }
+      return () => clearInterval(interval);
+    }, [isGenerating]);
     const resolutions = {
       desktop: "w-full",
       tablet: "w-[768px]",
@@ -40,15 +52,17 @@ const ProjectPreview = forwardRef<ProjectPreviewRef, ProjectPreviewProps>(
       getCode: () => {
         const doc = iframeRef.current?.contentDocument;
         if (!doc) return "";
-        
+
         const body = doc.querySelector("body");
         if (!body) return undefined;
-        
-        doc.querySelectorAll(".ai-selected-element, [data-ai-selected]").forEach((el) => {
-          el.classList.remove('ai-selected-element');
-          el.removeAttribute('data-ai-selected');
-          (el as HTMLElement).style.outline = "";
-        });
+
+        doc
+          .querySelectorAll(".ai-selected-element, [data-ai-selected]")
+          .forEach((el) => {
+            el.classList.remove("ai-selected-element");
+            el.removeAttribute("data-ai-selected");
+            (el as HTMLElement).style.outline = "";
+          });
 
         const preViewStyle = doc.getElementById("ai-preview-style");
         if (preViewStyle) preViewStyle.remove();
@@ -57,7 +71,7 @@ const ProjectPreview = forwardRef<ProjectPreviewRef, ProjectPreviewProps>(
         if (previewscript) previewscript.remove();
 
         return doc.documentElement.outerHTML;
-      }
+      },
     }));
     useEffect(() => {
       const handleMessage = (event: MessageEvent) => {
@@ -73,7 +87,7 @@ const ProjectPreview = forwardRef<ProjectPreviewRef, ProjectPreviewProps>(
       };
     }, []);
     const handleUpdate = useCallback(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (updates: any) => {
         if (!selectedElement) return;
         const updatedElement = { ...selectedElement, ...updates };
@@ -99,12 +113,12 @@ const ProjectPreview = forwardRef<ProjectPreviewRef, ProjectPreviewProps>(
     };
     return (
       <div className="relative h-full bg-gray-900 flex-1 rounded-xl overflow-hidden max-sm:ml-2">
-        {project.current_code ? (
+        {project.current_code && (
           <>
             <iframe
               ref={iframeRef}
               srcDoc={injectPreview(project.current_code)}
-              className={`h-full max-sm:w-full ${resolutions[device]} mx-auto transition-all`}
+              className={`h-full max-sm:w-full ${resolutions[device]} mx-auto transition-all ${isGenerating ? "opacity-50 pointer-events-none" : ""}`}
             />
             {showEditorPanel && (
               <EditorPanel
@@ -122,8 +136,11 @@ const ProjectPreview = forwardRef<ProjectPreviewRef, ProjectPreviewProps>(
               />
             )}
           </>
-        ) : (
-          isGenerating && <div>loading...</div>
+        )}
+        {isGenerating && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/60 backdrop-blur-md z-50 transition-all duration-500">
+            <LoaderSteps currentStep={currentStep} />
+          </div>
         )}
       </div>
     );

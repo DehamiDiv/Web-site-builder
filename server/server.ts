@@ -17,7 +17,9 @@ process.on('unhandledRejection', (reason, promise) => {
 const app = express();
 const port = 3000;
 const corsOptions ={
-    origin: process.env.TRUSTED_ORIGINS?.split(",") || [],
+    origin: function(origin: any, callback: any) {
+        callback(null, true);
+    },
     credentials:true,
     methods:["GET","POST","PUT","DELETE"],
     allowedHeaders:["Content-Type","Authorization"],
