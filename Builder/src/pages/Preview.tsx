@@ -32,9 +32,9 @@ const Preview = () => {
         if (data.code) {
           setCode(data.code);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(error);
-        toast.error(error.response?.data?.error || "Failed to load preview code");
+        toast.error((error as any).response?.data?.error || "Failed to load preview code");
       } finally {
         setLoading(false);
       }

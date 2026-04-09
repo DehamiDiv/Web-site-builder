@@ -18,9 +18,9 @@ const MyProject = () => {
       setLoading(true);
       const { data } = await api.post("/api/user/projects");
       setProjects(data.projects || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error(error.response?.data?.error || "Failed to load projects");
+      toast.error((error as any).response?.data?.error || "Failed to load projects");
     } finally {
       setLoading(false);
     }
@@ -28,24 +28,26 @@ const MyProject = () => {
 
   const deleteProject = async (id: string) => {
     try {
+      const confirm = window.confirm("Are you sure you want to delete this project?");
+      if (!confirm) return;
+      
       const { data } = await api.delete(`/api/project/delete/${id}`);
       toast.success(data.message || "Project deleted successfully");
       fetchProjects();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error(error.response?.data?.error || "Failed to delete project");
+      toast.error((error as any).response?.data?.error || "Failed to delete project");
     }
   };
 
   useEffect(() => {
     if (isPending) return;
     if (!session?.user) {
-      toast.error("Please login to view your projects");
+      toast.error("Please login to continue");
       navigate("/");
       return;
     }
     fetchProjects();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, isPending, navigate]);
 
   if (isPending) {
