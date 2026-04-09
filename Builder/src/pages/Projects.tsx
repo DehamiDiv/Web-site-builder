@@ -1,12 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
+import { toast } from "sonner";
+import api from "@/config/axios";
 import type { Project } from "../types";
 import type { ProjectPreviewRef } from "../assets/components/ProjectPreview";
-import {
-  dummyProjects,
-  dummyConversations,
-  dummyVersion,
-} from "../assets/assets";
 import Sidebar from "../assets/components/Sidebar";
 import ProjectPreview from "../assets/components/ProjectPreview";
 import {
@@ -39,19 +36,35 @@ const Projects = () => {
   const [isgenerating, setIsGenerating] = useState(false);
 
   const fetchProject = async () => {
-    const project = dummyProjects.find((p) => p.id === projectId);
-    setTimeout(() => {
-      if (project) {
-        setProject({
-          ...project,
-          conversation: dummyConversations as any,
-          versions: dummyVersion,
-        });
+    try {
+      setLoading(true);
+      const { data } = await api.post(`/api/user/project/${projectId}`);
+      if (data.project) {
+        setProject(data.project);
+      } else {
+        toast.error("Project not found");
       }
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to fetch project");
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
-  const saveProject = () => {};
+
+  const saveProject = async () => {
+    const code = previewRef.current?.getCode() || project?.current_code;
+    if (!code) return;
+    try {
+      const { data } = await api.post(`/api/project/save/${projectId}`, { code });
+      toast.success(data.message || "Project saved successfully!");
+      fetchProject();
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to save project");
+    }
+  };
+
   const downloadCode = () => {
     const code = previewRef.current?.getCode() || project?.current_code;
     if (!code) return;
@@ -63,9 +76,19 @@ const Projects = () => {
     a.click();
     URL.revokeObjectURL(url);
   };
-  const togglePublish = () => {};
+  const togglePublish = async () => {
+    try {
+      const { data } = await api.post(`/api/user/purchase-toggle/${projectId}`);
+      setProject((prev) => prev ? { ...prev, isPublished: data.isPublished } : prev);
+      toast.success(data.message);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to toggle publish status");
+    }
+  };
   useEffect(() => {
     fetchProject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {

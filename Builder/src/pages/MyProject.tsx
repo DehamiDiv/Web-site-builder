@@ -2,21 +2,40 @@ import { useState, useEffect } from "react";
 import type { Project } from "../types";
 import { Loader2Icon, PlusIcon, TrashIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { dummyProjects } from "../assets/assets";
 import Footer from "../assets/components/Footer";
+import api from "@/config/axios";
+import { toast } from "sonner";
 
 const MyProject = () => {
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
   const navigate = useNavigate();
 
-  const deleteProject = async () => {};
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const { data } = await api.post("/api/user/projects");
+      setProjects(data.projects || []);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to load projects");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteProject = async (id: string) => {
+    try {
+      const { data } = await api.delete(`/api/project/delete/${id}`);
+      toast.success(data.message || "Project deleted successfully");
+      fetchProjects();
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to delete project");
+    }
+  };
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      setProjects(dummyProjects);
-      setTimeout(() => setLoading(false), 1000);
-    };
     fetchProjects();
   }, []);
 
@@ -99,7 +118,7 @@ const MyProject = () => {
                       <TrashIcon
                         onClick={(e) => {
                           e.stopPropagation();
-                          deleteProject();
+                          deleteProject(project.id);
                         }}
                         className="absolute top-3 right-3 scale-0 group-hover:scale-100 bg-white p-1.5 size-7 rounded text-red-500 text-xl cursor-pointer transition-all"
                       />

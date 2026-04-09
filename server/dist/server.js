@@ -8,6 +8,14 @@ require("dotenv/config");
 const cors_1 = __importDefault(require("cors"));
 const node_1 = require("better-auth/node");
 const auth_1 = require("./lib/auth");
+const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
+const projectRoutes_1 = __importDefault(require("./routes/projectRoutes"));
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
 const app = (0, express_1.default)();
 const port = 3000;
 const corsOptions = {
@@ -17,10 +25,19 @@ const corsOptions = {
     allowedHeaders: ["Content-Type", "Authorization"],
 };
 app.use((0, cors_1.default)(corsOptions));
-app.all('/api/auth/*', (0, node_1.toNodeHandler)(auth_1.auth));
+// Log all requests to debug connectivity
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+});
+app.use('/api/auth', (0, node_1.toNodeHandler)(auth_1.auth));
+app.use(express_1.default.json({ limit: "50mb" }));
 app.get("/", (req, res) => {
     res.send("Server is Live!");
 });
+app.use("/api/user", userRoutes_1.default);
+app.use("/api/project", projectRoutes_1.default);
+app.use("/api/project", projectRoutes_1.default);
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });

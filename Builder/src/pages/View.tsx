@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { dummyProjects } from "../assets/assets";
 import { Loader2Icon } from "lucide-react";
 import ProjectPreview from "../assets/components/ProjectPreview";
 import type { Project } from "../types";
 import { useParams } from "react-router-dom";
+import api from "@/config/axios";
+import { toast } from "sonner";
 
 const View = () => {
   const { projectId } = useParams();
@@ -11,18 +12,23 @@ const View = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchCode = async () => {
-    const project = dummyProjects.find((project) => project.id === projectId);
-
-    setTimeout(() => {
-      if (project?.current_code) {
-        setCode(project.current_code);
+    try {
+      setLoading(true);
+      const { data } = await api.get(`/api/project/published/${projectId}`);
+      if (data.code) {
+        setCode(data.code);
       }
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to load project code");
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
 
   useEffect(() => {
     fetchCode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   if (loading) {

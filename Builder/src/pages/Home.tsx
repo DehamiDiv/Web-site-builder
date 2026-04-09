@@ -8,7 +8,7 @@ import api from "@/config/axios";
 const Home = () => {
   const { data: session } = authClient.useSession();
   const navigate = useNavigate();
-  const [, setInput] = useState("");
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
   const onSubmitHandler = async (e: React.FormEvent) => {
@@ -25,15 +25,11 @@ const Home = () => {
       });
       setLoading(false);
       navigate(`/projects/${data.project_id}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       setLoading(false);
-      toast.error(error.response?.data?.message || "Something went wrong");
+      toast.error(error.response?.data?.error || "Something went wrong");
     }
-    setLoading(true);
-    //simmulate API call
-    setTimeout(() => {
-      setLoading(false);
-    }, 3000);
   };
 
   return (
