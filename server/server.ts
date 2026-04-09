@@ -5,7 +5,7 @@ import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 import userRouter from "./routes/userRoutes";
 import projectRouter from "./routes/projectRoutes";
-import { sripeWebhook } from "./controllers/stripeWebhooks";
+import { stripeWebhooks } from "./controllers/stripeWebhooks";
 
 process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err);
