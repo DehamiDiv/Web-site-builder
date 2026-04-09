@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.purchaseCredits = exports.togglePublish = exports.getUserProjects = exports.getUserProject = exports.createNewProject = exports.getUserCredits = void 0;
 const prisma_js_1 = __importDefault(require("../lib/prisma.js"));
 const openai_js_1 = __importDefault(require("../config/openai.js"));
+const stripe_1 = __importDefault(require("stripe"));
 const extractHTML = (content) => {
     // 1. Try to find content between <html> and </html> tags
     const htmlMatch = content.match(/<html[\s\S]*?<\/html>/i);
@@ -340,6 +341,36 @@ const purchaseCredits = async (req, res) => {
                 credits: plan.credits
             }
         });
+        const stripeKey = process.env.STRIPE_SECRET_KEY;
+        if (!stripeKey) {
+            return res.status(500).json({ error: "Stripe not configured on server" });
+        }
+        const stripe = new stripe_1.default(stripeKey);
+        const domain = process.env.FRONTEND_URL || "http://localhost:5173";
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: `${plan.credits} Credits Plan`,
+                            description: `Purchase ${plan.credits} credits for Website Builder`,
+                        },
+                        unit_amount: plan.amount * 100, // Stripe expects amounts in cents
+                    },
+                    quantity: 1,
+                },
+            ],
+            mode: 'payment',
+            metadata: {
+                transactionId: transaction.id,
+                appId: 'ai-site-builder'
+            },
+            success_url: `${domain}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${domain}/pricing?canceled=true`,
+        });
+        res.status(200).json({ url: session.url });
     }
     catch (error) {
         console.error("Error purchasing credits:", error);
