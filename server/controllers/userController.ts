@@ -334,19 +334,31 @@ export const togglePublish = async (req: Request, res: Response) => {
 // Controller function to purchase credits
 export const purchaseCredits = async (req: Request, res: Response) => {
     try {
+        interface Plan {
+            credits:number;
+            amount:number;
+        }
+        const Plans ={
+            basic: {credits: 100,amount:5},
+            pro: {credits: 400, amount: 19},
+            enterprise: {credits: 1000, amount:49},
+        }
         const userId = req.userId;
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized user" });
+        const {planId} = req.body as {planId: keyof typeof plans}
+
+        const plan:Plan = plans[planId]
+        if(!plan){
+            return res.status(404).json({message: 'Plan not found'})
         }
-        const { credits } = req.body;
-        if (!credits || typeof credits !== 'number' || credits <= 0) {
-            return res.status(400).json({ error: "Invalid credits amount" });
-        }
-        const user = await prisma.user.update({
-            where: { id: userId },
-            data: { credits: { increment: credits } }
-        });
-        res.status(200).json({ message: "Credits purchased successfully", credits: user.credits });
+        const transaction = await prisma.transaction.create({
+            data: {
+                userId: userId!,
+                planId: req.body.planId,
+                amount: plan.amount,
+                credits: plan.credits
+
+            }
+        })
     } catch (error) {
         console.error("Error purchasing credits:", error);
         res.status(500).json({ error: "Failed to purchase credits" });
