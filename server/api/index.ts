@@ -40,7 +40,12 @@ app.use('/api/auth', toNodeHandler(auth));
 app.use(express.json({limit:"50mb"}))
 
 app.get("/", (req: Request, res:Response) => {
-    res.send("Server is Live!");
+    res.json({
+        status: "Server is Live!",
+        env: process.env.NODE_ENV,
+        database_url_set: !!process.env.DATABASE_URL,
+        auth_url_set: !!process.env.BETTER_AUTH_URL
+    });
 });
 app.use("/api/user", userRouter);
 app.use("/api/project", projectRouter);
