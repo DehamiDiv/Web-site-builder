@@ -1,0 +1,17 @@
+{
+  "name": "web-site-builder-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=Builder\" \"npm run dev --workspace=server\"",
+    "build": "npm run build --workspace=Builder && npm run build --workspace=server",
+    "postinstall": "cd server && npx prisma generate"
+  },
+  "workspaces": [
+    "Builder",
+    "server"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

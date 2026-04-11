@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "Builder/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "server/api/index.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "../node_modules/.prisma/client/**/*",
+          "../prisma/schema.prisma"
+        ]
+      }
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/stripe",
+      "destination": "server/api/index.ts"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "server/api/index.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "Builder/$1"
+    }
+  ]
+}

@@ -18,7 +18,7 @@ projectRouter.get("/code/:projectId", protect, getProjectCode);
 projectRouter.get("/code/:projectId/:versionId", protect, getProjectCode);
 projectRouter.post("/save/:projectId", protect, saveProjectCode);
 projectRouter.delete("/delete/:projectId", protect, deleteProject);
+projectRouter.get("/published", getAllPublishedProjects);
 projectRouter.get("/published/:projectId", getPublishedProject);
-projectRouter.get("/all", getAllPublishedProjects);
 
 export default projectRouter;
